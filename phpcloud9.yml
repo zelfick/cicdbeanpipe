@@ -1,25 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A CodeCommit Repo and Cloud9 Environment for Basic Development that takes project as parameter
+
+Parameters:
+  Projectname:
+    Description: Name of the project
+    Type: String
+    Default: Projectname
+  Projectreponame:
+    Description: Name of the project
+    Type: String
+    Default: Projectreponame
+
 Resources:
-  Phpcloud9:
-    Type: AWS::Cloud9::EnvironmentEC2
-    Properties: 
-      AutomaticStopTimeMinutes: 30
-      Description: phpapplication
+  ProjectRepo:
+    Type: "AWS::CodeCommit::Repository"
+    Properties:
+      RepositoryName: !Sub '${Projectreponame}'
+      RepositoryDescription: Project Repo for Cloud9
+      CloneUrlHttp: git@github.com:zelfick/cicdbeanpipe.git
+  ProjectIDE:
+    Type: "AWS::Cloud9::EnvironmentEC2"
+    Properties:
+      Repositories:
+        - PathComponent: /phpapplication
+          RepositoryUrl: !GetAtt ProjectRepo.CloneUrlHttp
       InstanceType: t2.micro
-      Name: phpexampleapp
-      OwnerArn: 
-    Repositories: 
-#    - Repository
-#      - endavago
-# Path to be cloned in the cloud9 environment /home/USER_NAME/environment/REPOSITORY_NAME
-        #PathComponent: /s3
-# Origin URL that would be cloned into the ambient https://path/directory/REPOSITORY_NAME
-        RepositoryUrl: git@github.com:zelfick/cicdbeanpipe.git
-#  SubnetId: String
+      #SubnetId: subnet-be8735d6
+      Name: PHPapplication
+      AutomaticStopTimeMinutes: 30
       Tags: 
-#    - Tag
-        - 
-          Key: "Owner"
-          Value: "Jorge Herran"
-        - 
-          Key: "Organization"
-          Value: "Valorit"
+   #     - Key: Name
+   #       Value: !Sub '${Projectname}'
+        - Key: env 
+          Value: development
+        - Key: InstanceSchedule 
+          Value: MED-OfficeHours
+        - Key: owner
+          Value: jorge.herran
+        - Key: project
+          Value: !Sub '${Projectname}'
+        - Key: Provisioner
+          Value: Cloudformation
+
+Outputs:
+  Cloud9URL:
+    Value:
+      Fn::Join:
+      - ''
+      - - https://console.aws.amazon.com/cloud9/home/environments/
+        - Ref: ProjectIDE
+    Description: PHPapplication Cloud9 environment
